@@ -23,15 +23,15 @@ pipeline {
                             }
                         }
                     }
-                    stage('Checkout') {
-                        steps {
-                            script {
-                                def branch = env.CHANGE_BRANCH ? env.CHANGE_BRANCH : env.GIT_BRANCH
-                                git branch: "${branch}", credentialsId: 'github-app', url: 'https://github.com/Web-tree/mystuff.git'
+                    stages {
+                        stage('Checkout') {
+                            steps {
+                                script {
+                                    def branch = env.CHANGE_BRANCH ? env.CHANGE_BRANCH : env.GIT_BRANCH
+                                    git branch: "${branch}", credentialsId: 'github-app', url: 'https://github.com/Web-tree/mystuff.git'
+                                }
                             }
                         }
-                    }
-                    stages {
                         stage('Validate') {
                             steps {
                                 dir('back') {
@@ -54,15 +54,15 @@ pipeline {
                             }
                         }
                     }
-                    stage('Checkout') {
-                        steps {
-                            script {
-                                def branch = env.CHANGE_BRANCH ? env.CHANGE_BRANCH : env.GIT_BRANCH
-                                git branch: "${branch}", credentialsId: 'github-app', url: 'https://github.com/Web-tree/mystuff.git'
+                    stages {
+                        stage('Checkout') {
+                            steps {
+                                script {
+                                    def branch = env.CHANGE_BRANCH ? env.CHANGE_BRANCH : env.GIT_BRANCH
+                                    git branch: "${branch}", credentialsId: 'github-app', url: 'https://github.com/Web-tree/mystuff.git'
+                                }
                             }
                         }
-                    }
-                    stages {
                         stage('Validate') {
                             steps {
                                 dir ('web/') {
