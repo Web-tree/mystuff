@@ -5,7 +5,8 @@
   "scripts": {
     "start": "node node_modules/@angular/cli/bin/ng serve",
     "build": "node node_modules/@angular/cli/bin/ng build",
-    "test": "node node_modules/@angular/cli/bin/ng test --browser PhantomJS --watch=false",
+    "test": "node node_modules/@angular/cli/bin/ng test",
+    "test-headless": "node node_modules/@angular/cli/bin/ng test --browsers ChromeCli --watch=false",
     "lint": "node node_modules/@angular/cli/bin/ng lint",
     "e2e": "node node_modules/@angular/cli/bin/ng e2e",
     "prod": "node node_modules/@angular/cli/bin/ng build --prod"
