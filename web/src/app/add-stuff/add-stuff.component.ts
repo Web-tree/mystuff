@@ -37,14 +37,12 @@ export class AddStuffComponent implements OnInit {
 
 
   save() {
-    //setTimeout(() => {
       this.stuffService.addStuff(this.addStuff.value, this.getCategoryIds()).subscribe(
         stuff => {
           console.log(stuff);
           this.router.navigate(['/stuff/' + stuff.id]);
         }
       );
-    //}, 1000);
   }
 
   ngOnInit() {
