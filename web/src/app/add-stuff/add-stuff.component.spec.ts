@@ -19,7 +19,6 @@ describe('AddStuffComponent', () => {
   let fixture: ComponentFixture < AddStuffComponent > ;
   let stuffService: StuffService;
 
-
   beforeEach(async (() => {
     TestBed.configureTestingModule({
         imports: [BrowserModule, FormsModule, ReactiveFormsModule,
@@ -38,6 +37,7 @@ describe('AddStuffComponent', () => {
     stuffService = TestBed.get(StuffService);
     fixture.detectChanges();
   });
+
   describe('form component', () => {
     it('should be created', () => {
       expect(component).toBeTruthy();
@@ -47,11 +47,27 @@ describe('AddStuffComponent', () => {
       spyOn(observable, 'subscribe');
       spyOn(stuffService, 'addStuff').and.returnValue(observable);
       component.name.setValue('stuff name');
+      component.addStuff.controls['description'].setValue('stuff desc');
       fixture.detectChanges();
       component.save();
 
       expect(stuffService.addStuff).toHaveBeenCalledWith(component.addStuff.value, []);
       expect(observable.subscribe).toHaveBeenCalled();
+
+    });
+    it('the addStuff service should recieve correct input data', () => {
+      let observable = new Observable();
+      spyOn(observable, 'subscribe');
+      spyOn(stuffService, 'addStuff').and.returnValue(observable);
+      component.name.setValue('stuff name');
+      component.addStuff.controls['description'].setValue('stuff desc');
+      fixture.detectChanges();
+      component.save();
+
+      stuffService.addStuff(component.addStuff.value, [1, 2, 3]).subscribe(stuff => {
+        expect(stuff.name).toBe('stuff name');
+        expect(stuff.description).toBe('stuff desc');
+      });
     });
   });
 
@@ -64,6 +80,10 @@ describe('AddStuffComponent', () => {
     });
     it('should be required', () => {
       expect(component.name.errors['required']).toBeTruthy();
+    });
+    it('should be invalid containing only spaces', () => {
+      component.name.setValue('    ');
+      expect(component.name.errors['pattern']).toBeTruthy();
     });
   });
 
