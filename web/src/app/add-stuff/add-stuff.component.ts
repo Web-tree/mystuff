@@ -28,7 +28,7 @@ export class AddStuffComponent implements OnInit {
 
   stuffFormInit() {
     this.addStuff = this.fb.group({
-      name: ['', Validators.required],
+      name: ['', [Validators.required, Validators.pattern('.*\\S.*[a-zA-z0-9 ]')]],
       description: '',
       categories: this.fb.array([])
     });
@@ -37,12 +37,14 @@ export class AddStuffComponent implements OnInit {
 
 
   save() {
-    this.stuffService.addStuff(this.addStuff.value, this.getCategoryIds()).subscribe(
-      stuff => {
-        console.log(stuff);
-        this.router.navigate(['/stuff/' + stuff.id]);
-      }
-    );
+    //setTimeout(() => {
+      this.stuffService.addStuff(this.addStuff.value, this.getCategoryIds()).subscribe(
+        stuff => {
+          console.log(stuff);
+          this.router.navigate(['/stuff/' + stuff.id]);
+        }
+      );
+    //}, 1000);
   }
 
   ngOnInit() {
