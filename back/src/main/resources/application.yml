@@ -20,6 +20,15 @@ server:
 #    maximumThreadPoolSizeSubscription: 20
 #    keepAliveTimeInSecondsSubscription: 30
 
+
+endpoints.enabled: false
+
+endpoints:
+  info.enabled: false
+  health.enabled: true
+
+
+
 jwt:
   header: Authorization
   secret: mySecret
