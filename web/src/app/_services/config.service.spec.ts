@@ -19,7 +19,7 @@ describe('ConfigService', () => {
   });
 
   it('#getBackUrl should return expected value', () => {
-    const url = "http://localhost:9000";
+    const url = "http://localhost:9000/";
     expect(configService.getBackUrl()).toEqual(url);
   });
 
