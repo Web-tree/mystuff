@@ -54,7 +54,7 @@ ingress:
   #   memory: 128Mi
 
 nodeSelector:
-  wt-type: backend
+  "node-role.kubernetes.io/type": backend
 
 tolerations: []
 
