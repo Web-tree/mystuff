@@ -28,6 +28,7 @@ import {TimeoutErrorHandler} from "./_error-handler/timeout.error.handler";
 import {UnauthorizedErrorHandler} from "./_error-handler/unuathorized.error.handler";
 import {DefaultHttpCodesErrorHandler} from "./_error-handler/default.httpcode.handler";
 import {SimpleNotificationsModule} from 'angular2-notifications';
+import {InputTrimModule} from 'ng2-trim-directive';
 
 const appInitializer = (appConfig: ConfigService) => {
   return () => {
@@ -62,7 +63,7 @@ const appInitializer = (appConfig: ConfigService) => {
     MatAutocompleteModule,
     BrowserAnimationsModule,
     SimpleNotificationsModule.forRoot(),
-
+    InputTrimModule
   ],
 
   providers: [

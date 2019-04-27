@@ -1,5 +1,5 @@
 import {Component, OnInit, ViewChild} from "@angular/core";
-import {FormBuilder, FormGroup} from "@angular/forms";
+import {FormBuilder, FormGroup, Validators, AbstractControl} from "@angular/forms";
 import {HttpClient} from "@angular/common/http";
 import {StuffService} from "../_services/stuff.service";
 import 'rxjs/add/operator/debounceTime';
@@ -17,6 +17,7 @@ export class AddStuffComponent implements OnInit {
   private addCategoryComponent: AddCategoryComponent;
 
   addStuff: FormGroup;
+  name: AbstractControl;
 
   constructor(private fb: FormBuilder,
               private http: HttpClient,
@@ -27,20 +28,21 @@ export class AddStuffComponent implements OnInit {
 
   stuffFormInit() {
     this.addStuff = this.fb.group({
-      name: '',
+      name: ['', Validators.required],
       description: '',
       categories: this.fb.array([])
     });
+    this.name = this.addStuff.controls['name'];
   }
 
 
   save() {
-    this.stuffService.addStuff(this.addStuff.value, this.getCategoryIds()).subscribe(
-      stuff => {
-        console.log(stuff);
-        this.router.navigate(['/stuff/' + stuff.id]);
-      }
-    );
+      this.stuffService.addStuff(this.addStuff.value, this.getCategoryIds()).subscribe(
+        stuff => {
+          console.log(stuff);
+          this.router.navigate(['/stuff/' + stuff.id]);
+        }
+      );
   }
 
   ngOnInit() {
