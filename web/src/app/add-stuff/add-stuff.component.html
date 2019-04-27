@@ -2,9 +2,9 @@
 <form [formGroup]="addStuff" (ngSubmit)="addStuff.valid && save()">
   <div class="form-group">
     <label for="name">Name</label>
-    <input class="form-control" formControlName="name" id="name" required />
+    <input class="form-control" formControlName="name" id="name" required trim="blur"/>
     <div class="alert alert-danger" *ngIf="name.invalid && (name.dirty || name.touched)">
-      <div *ngIf="name.errors.required || name.errors.pattern">
+      <div *ngIf="name.errors.required">
         Name is required.
       </div>
     </div>
