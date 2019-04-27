@@ -81,10 +81,6 @@ describe('AddStuffComponent', () => {
     it('should be required', () => {
       expect(component.name.errors['required']).toBeTruthy();
     });
-    it('should be invalid containing only spaces', () => {
-      component.name.setValue('    ');
-      expect(component.name.errors['pattern']).toBeTruthy();
-    });
   });
 
   describe('save button', () => {
