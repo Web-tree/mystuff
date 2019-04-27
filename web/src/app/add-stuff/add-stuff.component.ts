@@ -28,7 +28,7 @@ export class AddStuffComponent implements OnInit {
 
   stuffFormInit() {
     this.addStuff = this.fb.group({
-      name: ['', [Validators.required, Validators.pattern('.*\\S.*[a-zA-z0-9 ]')]],
+      name: ['', Validators.required],
       description: '',
       categories: this.fb.array([])
     });
