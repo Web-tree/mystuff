@@ -88,7 +88,7 @@ spec:
           imagePullPolicy: {{ .Values.images.back.pullPolicy }}
           env:
             - name: spring.data.neo4j.uri
-              value: http://neo4j:{{ .Values.neo4j.neo4jPassword }}@mystuff-neo4j:80
+              value: http://neo4j:{{ .Values.neo4j.neo4jPassword }}@{{ include "mystuff.name.neo4j" . }}:80
           ports:
             - name: back
               containerPort: 9000
