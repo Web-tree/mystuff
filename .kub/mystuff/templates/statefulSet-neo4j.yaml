@@ -65,8 +65,15 @@ spec:
       {{- end }}
       {{- with .Values.tolerations }}
       tolerations:
-  {{- toYaml . | nindent 8 }}
-  {{- end }}
+      {{- toYaml . | nindent 8 }}
+      {{- end }}
+
+      {{- if not .Values.neo4j.core.persistentVolume.enabled }}
+      volumes:
+        - name: datadir
+          emptyDir: {}
+      {{ end }}
+  {{- if .Values.neo4j.core.persistentVolume.enabled }}
   volumeClaimTemplates:
     - metadata:
         name: datadir
@@ -76,3 +83,4 @@ spec:
         resources:
           requests:
             storage: "{{ .Values.neo4j.core.persistentVolume.size }}"
+  {{ end }}
