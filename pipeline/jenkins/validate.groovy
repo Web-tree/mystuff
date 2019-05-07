@@ -17,6 +17,7 @@ pipeline {
                     buildVersion = env.GIT_BRANCH.toLowerCase()
                     webTag = "web-${buildVersion}"
                     backTag = "back-${buildVersion}"
+                    branch = env.CHANGE_BRANCH ? env.CHANGE_BRANCH : env.GIT_BRANCH
                 }
             }
         }
@@ -79,7 +80,7 @@ pipeline {
                         }
                         stage('Validate') {
                             steps {
-                                dir ('web/') {
+                                dir('web/') {
                                     sh 'npm ci'
                                     sh 'npm run test-headless'
                                     junit 'testResult/*.xml'
@@ -93,50 +94,50 @@ pipeline {
         stage('Test system provision') {
             stages {
                 stage('Build/publish images') {
-                    agent {
-                        kubernetes {
-                            label 'mystuff-docker-builder'
-                            yaml """
-apiVersion: v1
-kind: Pod
-spec:
-  containers:
-  - name: docker-builder
-    image: docker:18.09.5
-    command: ['cat']
-    tty: true
-    volumeMounts:
-    - name: dockersock
-      mountPath: /var/run/docker.sock
-  volumes:
-  - name: dockersock
-    hostPath:
-      path: /var/run/docker.sock
-"""
-                        }
-                    }
-                    steps {
-                        container('docker-builder') {
-                            dir('web') {
-                                script {
-                                    withDockerRegistry(credentialsId: 'docker-hub') {
-
-                                        def image = docker.build("webtree/mystuff:${webTag}")
-                                        image.push(webTag)
-                                    }
+                    parallel {
+                        stage('Build web image') {
+                            agent {
+                                kubernetes {
+                                    label 'mystuff-docker-builder'
+                                    yamlFile 'pipeline/jenkins/agent/dockerBuilder.yaml'
                                 }
                             }
-                            dir('back') {
-                                script {
-                                    withDockerRegistry(credentialsId: 'docker-hub') {
+                            steps {
+                                container('docker-builder') {
+                                    dir('web') {
+                                        script {
+                                            withDockerRegistry(credentialsId: 'docker-hub') {
 
-                                        def image = docker.build("webtree/mystuff:${backTag}")
-                                        image.push(backTag)
+                                                def image = docker.build("webtree/mystuff:${webTag}")
+                                                image.push(webTag)
+                                            }
+                                        }
                                     }
                                 }
                             }
                         }
+                        stage('Build web image') {
+                            agent {
+                                kubernetes {
+                                    label 'mystuff-docker-builder'
+                                    yamlFile 'pipeline/jenkins/agent/dockerBuilder.yaml'
+                                }
+                            }
+                            steps {
+                                container('docker-builder') {
+                                    dir('back') {
+                                        script {
+                                            withDockerRegistry(credentialsId: 'docker-hub') {
+                                                def image = docker.build("webtree/mystuff:${backTag}")
+                                                image.push(backTag)
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
+
                 }
 
                 stage('Provision PR system') {
@@ -153,21 +154,7 @@ spec:
                     }
                     steps {
                         dir('.kub/mystuff') {
-                            script{
-                                def deployName = "mystuff-${buildVersion}"
-                                def webUrl = "mystuff-${buildVersion}.dev.webtree.org"
-                                def backUrl = "back.mystuff-dev-${buildVersion}.webtree.org"
-                                sh "helm delete ${deployName} --purge || true"
-                                sh "helm install --wait --name=${deployName} --namespace=webtree-dev --set replicaCount=1 --set nameOverride=mystuff-${buildVersion} --set ingress.web.host=${webUrl} --set ingress.back.host=${backUrl} --set neo4j.core.persistentVolume.enabled=false --set images.web.tag=${webTag} --set images.back.tag=${backTag} --set images.back.pullPolicy=Always  --set images.web.pullPolicy=Always ."
-                                def body = JsonOutput.toJson([body: "Test system provisioned on url https://${webUrl}. Backend: https://${backUrl}"])
-                                httpRequest (consoleLogResponseBody: true,
-                                    contentType: 'APPLICATION_JSON',
-                                    httpMode: 'POST',
-                                    requestBody: body,
-                                    url: "https://api.github.com/repos/Web-tree/mystuff/issues/${env.CHANGE_ID}/comments",
-                                    authentication: 'github-repo-token',
-                                    validResponseCodes: '201')
-                            }
+                            deployEnv(buildVersion, webTag, backTag, "mystuff")
                         }
                     }
                 }
@@ -201,12 +188,34 @@ spec:
             }
         }
     }
-//    post {
-//        success {
-//            slackSend(color: '#00FF00', message: "SUCCESSFUL: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})")
-//        }
-//        failure {
-//            slackSend(color: '#FF0000', message: "FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})")
-//        }
-//    }
+    post {
+        success {
+            slackSend(color: '#00FF00', message: "SUCCESSFUL: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})")
+        }
+        failure {
+            slackSend(color: '#FF0000', message: "FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})")
+        }
+    }
+}
+
+private void deployEnv(buildVersion, webTag, backTag, projectName, tier = 'dev') {
+    assert ['dev', 'prod'].contains(tier)
+    def deployName = "${projectName}-${tier}-${buildVersion}"
+    def webUrl = "${projectName}-${buildVersion}.dev.webtree.org"
+    def backUrl = "back.${deployName}.webtree.org"
+    sh "helm delete ${deployName} --purge || true"
+    sh "helm install --wait --name=${deployName} --namespace=webtree-${tier} --set nameOverride=${deployName} --set ingress.web.host=${webUrl} --set ingress.back.host=${backUrl} --set images.web.tag=${webTag} --set images.back.tag=${backTag} -f values.${tier}.yaml ."
+    def message = "Test system provisioned on url https://${webUrl}. Backend: https://${backUrl}"
+    sendPrComment("mystuff", env.CHANGE_ID, message)
+}
+
+private void sendPrComment(repo, issueId, message) {
+    def body = JsonOutput.toJson([body: message])
+    httpRequest(consoleLogResponseBody: true,
+        contentType: 'APPLICATION_JSON',
+        httpMode: 'POST',
+        requestBody: body,
+        url: "https://api.github.com/repos/Web-tree/${repo}/issues/${issueId}/comments",
+        authentication: 'github-repo-token',
+        validResponseCodes: '201')
 }
