@@ -1,8 +1,7 @@
-import groovy.json.*
-
 def buildVersion
 def backTag
 def webTag
+def tier
 
 pipeline {
     agent any
@@ -15,9 +14,18 @@ pipeline {
             steps {
                 script {
                     buildVersion = env.GIT_BRANCH.toLowerCase()
-                    webTag = "web-${buildVersion}"
-                    backTag = "back-${buildVersion}"
+
                     branch = env.CHANGE_BRANCH ? env.CHANGE_BRANCH : env.GIT_BRANCH
+                    switch (branch) {
+                        case 'master':
+                            tier = 'prod'
+                            break
+                        default:
+                            tier = 'dev'
+                    }
+                    def time = new Date().format('yyyyMMddHH.mm.ss')
+                    webTag = "web-${tier}-${buildVersion}-${time}"
+                    backTag = "back-${tier}-${buildVersion}-${time}"
                 }
             }
         }
@@ -116,7 +124,7 @@ pipeline {
                                 }
                             }
                         }
-                        stage('Build web image') {
+                        stage('Build back image') {
                             agent {
                                 kubernetes {
                                     label 'mystuff-docker-builder'
@@ -141,6 +149,9 @@ pipeline {
                 }
 
                 stage('Provision PR system') {
+                    when {
+                        expression { tier == 'dev' }
+                    }
                     agent {
                         kubernetes {
                             label 'helm'
@@ -154,7 +165,29 @@ pipeline {
                     }
                     steps {
                         dir('.kub/mystuff') {
-                            deployEnv(buildVersion, webTag, backTag, "mystuff")
+                            deployDevEnv(buildVersion, webTag, backTag, "mystuff", tier)
+                        }
+                    }
+                }
+
+                stage('Update production') {
+                    when {
+                        expression { tier == 'prod' }
+                    }
+                    agent {
+                        kubernetes {
+                            label 'helm'
+                            containerTemplate {
+                                name 'helm'
+                                image 'lachlanevenson/k8s-helm:v2.12.3'
+                                ttyEnabled true
+                                command 'cat'
+                            }
+                        }
+                    }
+                    steps {
+                        dir('.kub/mystuff') {
+                            updateProduction(buildVersion, webTag, backTag, "mystuff", tier)
                         }
                     }
                 }
@@ -188,25 +221,32 @@ pipeline {
             }
         }
     }
-//    post {
-//        success {
-//            slackSend(color: '#00FF00', message: "SUCCESSFUL: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})")
-//        }
-//        failure {
-//            slackSend(color: '#FF0000', message: "FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})")
-//        }
-//    }
+    post {
+        success {
+            slackSend(color: '#00FF00', message: "SUCCESSFUL: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})")
+        }
+        failure {
+            slackSend(color: '#FF0000', message: "FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})")
+        }
+    }
 }
 
-private void deployEnv(buildVersion, webTag, backTag, projectName, tier = 'dev') {
+
+private void deployDevEnv(buildVersion, webTag, backTag, projectName, tier) {
     assert ['dev', 'prod'].contains(tier)
+
     def deployName = "${projectName}-${tier}-${buildVersion}"
     def webUrl = "${projectName}-${buildVersion}.dev.webtree.org"
     def backUrl = "back.${deployName}.webtree.org"
     sh "helm delete ${deployName} --purge || true"
-    sh "helm install --wait --name=${deployName} --namespace=webtree-${tier} --set nameOverride=${deployName} --set ingress.web.host=${webUrl} --set ingress.back.host=${backUrl} --set images.web.tag=${webTag} --set images.back.tag=${backTag} -f values.${tier}.yaml ."
+    sh "helm install --wait --name=${deployName} --namespace=webtree-${tier} --set nameOverride=${deployName},ingress.web.host=${webUrl},ingress.back.host=${backUrl},images.web.tag=${webTag},images.back.tag=${backTag} -f values.${tier}.yaml ."
     def message = "Test system provisioned on url https://${webUrl}. Backend: https://${backUrl}"
-    sendPrComment(message, "mystuff", env.CHANGE_ID)
+    sendPrComment("mystuff", env.CHANGE_ID, message)
+
+}
+
+private void updateProduction(webTag, backTag, projectName) {
+    sh "helm update --wait --name=${projectName} --namespace=webtree --set images.web.tag=${webTag},images.back.tag=${backTag} ."
 }
 
 private void sendPrComment(repo, issueId, message) {
