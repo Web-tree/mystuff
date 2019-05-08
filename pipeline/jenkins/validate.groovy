@@ -3,6 +3,7 @@ import groovy.json.*
 def buildVersion
 def backTag
 def webTag
+def tier
 
 pipeline {
     agent any
@@ -15,9 +16,18 @@ pipeline {
             steps {
                 script {
                     buildVersion = env.GIT_BRANCH.toLowerCase()
-                    webTag = "web-${buildVersion}"
-                    backTag = "back-${buildVersion}"
+
                     branch = env.CHANGE_BRANCH ? env.CHANGE_BRANCH : env.GIT_BRANCH
+                    switch (branch) {
+                        case 'master':
+                            tier = 'prod'
+                            break
+                        default:
+                            tier = 'dev'
+                    }
+                    def time = new Date().format('yyyyMMddHH.mm.ss')
+                    webTag = "web-${tier}-${buildVersion}-${time}"
+                    backTag = "back-${tier}-${buildVersion}-${time}"
                 }
             }
         }
@@ -154,7 +164,7 @@ pipeline {
                     }
                     steps {
                         dir('.kub/mystuff') {
-                            deployEnv(buildVersion, webTag, backTag, "mystuff")
+                            deployEnv(buildVersion, webTag, backTag, "mystuff", tier)
                         }
                     }
                 }
@@ -188,25 +198,36 @@ pipeline {
             }
         }
     }
-//    post {
-//        success {
-//            slackSend(color: '#00FF00', message: "SUCCESSFUL: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})")
-//        }
-//        failure {
-//            slackSend(color: '#FF0000', message: "FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})")
-//        }
-//    }
+    post {
+        success {
+            slackSend(color: '#00FF00', message: "SUCCESSFUL: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})")
+        }
+        failure {
+            slackSend(color: '#FF0000', message: "FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})")
+        }
+    }
 }
 
-private void deployEnv(buildVersion, webTag, backTag, projectName, tier = 'dev') {
+private void deployEnv(buildVersion, webTag, backTag, projectName, tier) {
     assert ['dev', 'prod'].contains(tier)
-    def deployName = "${projectName}-${tier}-${buildVersion}"
-    def webUrl = "${projectName}-${buildVersion}.dev.webtree.org"
-    def backUrl = "back.${deployName}.webtree.org"
-    sh "helm delete ${deployName} --purge || true"
-    sh "helm install --wait --name=${deployName} --namespace=webtree-${tier} --set nameOverride=${deployName} --set ingress.web.host=${webUrl} --set ingress.back.host=${backUrl} --set images.web.tag=${webTag} --set images.back.tag=${backTag} -f values.${tier}.yaml ."
-    def message = "Test system provisioned on url https://${webUrl}. Backend: https://${backUrl}"
-    sendPrComment(message, "mystuff", env.CHANGE_ID)
+
+    switch (tier) {
+        case 'dev':
+            def deployName = "${projectName}-${tier}-${buildVersion}"
+            def webUrl = "${projectName}-${buildVersion}.dev.webtree.org"
+            def backUrl = "back.${deployName}.webtree.org"
+            sh "helm delete ${deployName} --purge || true"
+            sh "helm install --wait --name=${deployName} --namespace=webtree-${tier} --set nameOverride=${deployName},ingress.web.host=${webUrl},ingress.back.host=${backUrl},images.web.tag=${webTag},images.back.tag=${backTag} -f values.${tier}.yaml ."
+            def message = "Test system provisioned on url https://${webUrl}. Backend: https://${backUrl}"
+            sendPrComment("mystuff", env.CHANGE_ID, message)
+            break
+        case 'prod':
+            sh "helm update --wait --name=${projectName} --namespace=webtree --set images.web.tag=${webTag},images.back.tag=${backTag} ."
+            break
+        default:
+            error("Unknown tier ${tier}")
+    }
+
 }
 
 private void sendPrComment(repo, issueId, message) {
