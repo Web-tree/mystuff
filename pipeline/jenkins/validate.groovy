@@ -1,9 +1,8 @@
-import groovy.json.*
-
 def buildVersion
 def backTag
 def webTag
 def tier
+def isPullRequest
 
 pipeline {
     agent any
@@ -16,10 +15,10 @@ pipeline {
             steps {
                 script {
                     buildVersion = env.GIT_BRANCH.toLowerCase()
-
-                    branch = env.CHANGE_BRANCH ? env.CHANGE_BRANCH : env.GIT_BRANCH
+                    isPullRequest = env.CHANGE_ID ? true : false
+                    branch = isPullRequest ? env.CHANGE_BRANCH : env.GIT_BRANCH
                     switch (branch) {
-                        case 'master':
+                        case 'mystuff-56-cd':
                             tier = 'prod'
                             break
                         default:
@@ -126,7 +125,7 @@ pipeline {
                                 }
                             }
                         }
-                        stage('Build web image') {
+                        stage('Build back image') {
                             agent {
                                 kubernetes {
                                     label 'mystuff-docker-builder'
@@ -151,6 +150,9 @@ pipeline {
                 }
 
                 stage('Provision PR system') {
+                    when {
+                        expression { tier == 'dev' && isPullRequest }
+                    }
                     agent {
                         kubernetes {
                             label 'helm'
@@ -164,7 +166,29 @@ pipeline {
                     }
                     steps {
                         dir('.kub/mystuff') {
-                            deployEnv(buildVersion, webTag, backTag, "mystuff", tier)
+                            deployDevEnv(buildVersion, webTag, backTag, "mystuff", tier)
+                        }
+                    }
+                }
+
+                stage('Update production') {
+                    when {
+                        expression { tier == 'prod' }
+                    }
+                    agent {
+                        kubernetes {
+                            label 'helm'
+                            containerTemplate {
+                                name 'helm'
+                                image 'lachlanevenson/k8s-helm:v2.12.3'
+                                ttyEnabled true
+                                command 'cat'
+                            }
+                        }
+                    }
+                    steps {
+                        dir('.kub/mystuff') {
+                            updateProduction(webTag, backTag, "mystuff")
                         }
                     }
                 }
@@ -208,30 +232,24 @@ pipeline {
     }
 }
 
-private void deployEnv(buildVersion, webTag, backTag, projectName, tier) {
-    assert ['dev', 'prod'].contains(tier)
 
-    switch (tier) {
-        case 'dev':
-            def deployName = "${projectName}-${tier}-${buildVersion}"
-            def webUrl = "${projectName}-${buildVersion}.dev.webtree.org"
-            def backUrl = "back.${deployName}.webtree.org"
-            sh "helm delete ${deployName} --purge || true"
-            sh "helm install --wait --name=${deployName} --namespace=webtree-${tier} --set nameOverride=${deployName},ingress.web.host=${webUrl},ingress.back.host=${backUrl},images.web.tag=${webTag},images.back.tag=${backTag} -f values.${tier}.yaml ."
-            def message = "Test system provisioned on url https://${webUrl}. Backend: https://${backUrl}"
-            sendPrComment("mystuff", env.CHANGE_ID, message)
-            break
-        case 'prod':
-            sh "helm update --wait --name=${projectName} --namespace=webtree --set images.web.tag=${webTag},images.back.tag=${backTag} ."
-            break
-        default:
-            error("Unknown tier ${tier}")
-    }
+private void deployDevEnv(buildVersion, webTag, backTag, projectName, tier) {
+    def deployName = "${projectName}-${tier}-${buildVersion}"
+    def webUrl = "${projectName}-${buildVersion}.dev.webtree.org"
+    def backUrl = "back.${deployName}.webtree.org"
+    sh "helm delete ${deployName} --purge || true"
+    sh "helm install --wait --name=${deployName} --namespace=webtree-${tier} --set nameOverride=${deployName},ingress.web.host=${webUrl},ingress.back.host=${backUrl},images.web.tag=${webTag},images.back.tag=${backTag} -f values.${tier}.yaml ."
+    def message = "Test system provisioned on url https://${webUrl}. Backend: https://${backUrl}"
+    sendPrComment("mystuff", env.CHANGE_ID, message)
 
 }
 
+private void updateProduction(webTag, backTag, projectName) {
+    sh "helm upgrade --wait ${projectName} --reuse-values -f values.yaml --set images.web.tag=${webTag},images.back.tag=${backTag} ."
+}
+
 private void sendPrComment(repo, issueId, message) {
-    def body = JsonOutput.toJson([body: message])
+    def body = groovy.json.JsonOutput.toJson([body: message])
     httpRequest(consoleLogResponseBody: true,
         contentType: 'APPLICATION_JSON',
         httpMode: 'POST',
