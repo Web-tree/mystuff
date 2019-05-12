@@ -18,7 +18,7 @@ pipeline {
                     isPullRequest = env.CHANGE_ID ? true : false
                     branch = isPullRequest ? env.CHANGE_BRANCH : env.GIT_BRANCH
                     switch (branch) {
-                        case 'mystuff-56-cd':
+                        case 'master':
                             tier = 'prod'
                             break
                         default:
