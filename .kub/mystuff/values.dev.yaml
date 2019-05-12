@@ -1,0 +1,11 @@
+images:
+  back:
+    pullPolicy: Always
+  web:
+    pullPolicy: Always
+neo4j:
+  core:
+    persistentVolume:
+      enabled: false
+
+replicaCount: 1
