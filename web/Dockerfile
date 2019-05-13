@@ -1,13 +1,14 @@
 ### STAGE 1: Build ###
-FROM node:8-alpine as builder
+FROM node:12.2.0-alpine as builder
 
-RUN npm set progress=false && npm config set depth 0
+RUN npm set progress=false && \
+    npm config set depth 0
 #&& npm cache clean --force
 RUN mkdir /web
 WORKDIR /web
 COPY . .
-RUN npm config set registry http://registry.npmjs.org/ \
-    npm ci \
+RUN npm config set registry http://registry.npmjs.org/ &&\
+    npm ci && \
     $(npm bin)/ng build --prod --build-optimizer
 
 #RUN npm update && ng serve --prod
@@ -16,7 +17,7 @@ RUN npm config set registry http://registry.npmjs.org/ \
 FROM nginx:1.16.0-alpine
 #FROM janeczku/debian-nginx
 
-RUN apk update \
+RUN apk update && \
     apk add jq
 
 # set back-url
