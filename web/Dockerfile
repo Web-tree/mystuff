@@ -13,7 +13,7 @@ RUN $(npm bin)/ng build --prod --build-optimizer
 #RUN npm update && ng serve --prod
 
 ### STAGE 2: Setup ###
-FROM nginx
+FROM nginx:1.16.0-alpine
 #FROM janeczku/debian-nginx
 
 RUN apt-get update
