@@ -6,9 +6,9 @@ RUN npm set progress=false && npm config set depth 0
 RUN mkdir /web
 WORKDIR /web
 COPY . .
-RUN npm config set registry http://registry.npmjs.org/
-RUN npm i
-RUN $(npm bin)/ng build --prod --build-optimizer
+RUN npm config set registry http://registry.npmjs.org/ \
+    npm ci \
+    $(npm bin)/ng build --prod --build-optimizer
 
 #RUN npm update && ng serve --prod
 
@@ -16,8 +16,8 @@ RUN $(npm bin)/ng build --prod --build-optimizer
 FROM nginx:1.16.0-alpine
 #FROM janeczku/debian-nginx
 
-RUN apt-get update
-RUN apt-get -y install jq
+RUN apk update \
+    apk add jq
 
 # set back-url
 COPY nginx/default.conf /etc/nginx/conf.d/default.conf
