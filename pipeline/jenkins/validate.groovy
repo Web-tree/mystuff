@@ -30,9 +30,9 @@ pipeline {
                 }
             }
         }
-        stage('Verify') {
+        stage('Unit') {
             parallel {
-                stage('Verify back') {
+                stage('Back') {
                     environment {
                         MAVEN_HOME = '/usr/share/maven'
                     }
@@ -56,7 +56,7 @@ pipeline {
                                 }
                             }
                         }
-                        stage('Validate') {
+                        stage('Units back') {
                             steps {
                                 dir('back') {
                                     sh 'mvn -B clean verify -Dmaven.test.failure.ignore=true'
@@ -66,7 +66,7 @@ pipeline {
                         }
                     }
                 }
-                stage('Verify front') {
+                stage('Front') {
                     agent {
                         kubernetes {
                             label 'mystuff-validate-node'
@@ -87,7 +87,7 @@ pipeline {
                                 }
                             }
                         }
-                        stage('Validate') {
+                        stage('Units front') {
                             steps {
                                 dir('web/') {
                                     sh 'npm ci'
