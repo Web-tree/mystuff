@@ -238,7 +238,7 @@ private void deployDevEnv(buildVersion, webTag, backTag, projectName, tier) {
     def webUrl = "${projectName}-${buildVersion}.dev.webtree.org"
     def backUrl = "back.${deployName}.webtree.org"
     sh "helm delete ${deployName} --purge || true"
-    sh "helm install --wait --name=${deployName} --namespace=webtree-${tier} --set nameOverride=${deployName},ingress.web.host=${webUrl},ingress.back.host=${backUrl},images.web.tag=${webTag},images.back.tag=${backTag} -f values.${tier}.yaml ."
+    sh "helm install --wait --name=${deployName} --namespace=webtree-${tier} --set nameOverride=${deployName},ingress.web.host=${webUrl},ingress.back.host=${backUrl},images.web.tag=${webTag},images.back.tag=${backTag} -f values.${tier}.yaml neo4j.neo4jPassword=\$(head /dev/urandom | tr -dc A-Za-z0-9 | head -c 13 ; echo '') ."
     def message = "Test system provisioned on url https://${webUrl}. Backend: https://${backUrl}"
     sendPrComment("mystuff", env.CHANGE_ID, message)
 
