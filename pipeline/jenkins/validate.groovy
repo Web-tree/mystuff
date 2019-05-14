@@ -41,7 +41,7 @@ pipeline {
                             label 'mystuff-validate-maven'
                             containerTemplate {
                                 name 'maven'
-                                image 'maven:3.5.4-jdk-11-slim'
+                                image 'webtree/build-images:maven-jdk-11'
                                 ttyEnabled true
                                 command 'cat'
                             }
@@ -116,7 +116,6 @@ pipeline {
                                     dir('web') {
                                         script {
                                             withDockerRegistry(credentialsId: 'docker-hub') {
-
                                                 def image = docker.build("webtree/mystuff:${webTag}")
                                                 image.push(webTag)
                                             }
