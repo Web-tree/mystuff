@@ -236,9 +236,9 @@ private void deployDevEnv(buildVersion, webTag, backTag, projectName, tier) {
     def deployName = "${projectName}-${tier}-${buildVersion}"
     def webUrl = "${projectName}-${buildVersion}.dev.webtree.org"
     def backUrl = "back.${deployName}.webtree.org"
-    def pass = sh(script:"\$(head /dev/urandom | tr -dc A-Za-z0-9 | head -c 13 ; echo '')", returnStdout: true).trim
+    def pass = sh(script:"head /dev/urandom | tr -dc A-Za-z0-9 | head -c 13 ; echo ''", returnStdout: true).trim()
     sh "helm delete ${deployName} --purge || true"
-    sh "helm install --wait --name=${deployName} --namespace=webtree-${tier} --set nameOverride=${deployName},ingress.web.host=${webUrl},ingress.back.host=${backUrl},images.web.tag=${webTag},images.back.tag=${backTag} -f values.${tier}.yaml neo4j.neo4jPassword=${pass} ."
+    sh "helm install --wait --name=${deployName} --namespace=webtree-${tier} --set nameOverride=${deployName},ingress.web.host=${webUrl},ingress.back.host=${backUrl},images.web.tag=${webTag},images.back.tag=${backTag},neo4j.neo4jPassword=${pass} -f values.${tier}.yaml ."
     def message = "Test system provisioned on url https://${webUrl}. Backend: https://${backUrl}"
     sendPrComment("mystuff", env.CHANGE_ID, message)
 
