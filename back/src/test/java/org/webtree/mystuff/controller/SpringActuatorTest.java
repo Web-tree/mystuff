@@ -8,10 +8,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-
-@WithMockCustomUser
 public class SpringActuatorTest extends AbstractControllerTest {
-
 
     @Test
     public void whenGetHealth_shouldReturnUP() throws Exception {
