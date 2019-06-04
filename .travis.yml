@@ -1,0 +1,18 @@
+matrix:
+  include:
+    - language: java
+      jdk: oraclejdk11
+      script:
+        - cd back
+        - mvn -Dmaven.test.failure.ignore=true verify
+    - language: node_js
+      node_js:
+        - "7"
+      script:
+        - cd web
+        - npm install
+        - npm run test-headless
+cache:
+  directories:
+    - $HOME/.m2
+    - web/node_modules
