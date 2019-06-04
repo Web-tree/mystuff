@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/Web-tree/mystuff.svg?branch=master)](https://travis-ci.org/Web-tree/mystuff)
+
 # Build
 ## Backend (back subfolder)
 ### Maven
