@@ -2,12 +2,13 @@ matrix:
   include:
     - language: java
       jdk: oraclejdk11
-      before_script:
+      script:
         - cd back
-      script:
-        - mvn -Dmaven.test.failure.ignore=true -B verify
+        - mvn -Dmaven.test.failure.ignore=true verify
     - language: node_js
-      before_script:
-        - cd web
+      node_js:
+        - "7"
       script:
-        - npm ci
+        - cd web
+        - npm install
+        - npm run test-headless
