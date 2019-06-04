@@ -12,3 +12,7 @@ matrix:
         - cd web
         - npm install
         - npm run test-headless
+cache:
+  directories:
+    - $HOME/.m2
+    - web/node_modules
