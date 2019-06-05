@@ -17,7 +17,7 @@ import {StuffDetailsComponent} from './stuff-details/stuff-details.component';
 import {TokenService} from "./_services/token.service";
 import {ConfigService} from "./_services/config.service";
 import {AuthHttpIntercept} from "./_intercept/auth-http-intercept";
-import {MatAutocompleteModule, MatChipsModule, MatFormFieldModule, MatIconModule} from "@angular/material";
+import {MatAutocompleteModule, MatChipsModule, MatFormFieldModule, MatIconModule, MatInputModule,} from "@angular/material";
 import {BrowserAnimationsModule} from "@angular/platform-browser/animations";
 import {Subject} from "rxjs/Subject";
 import {AddCategoryComponent} from './add-category/add-category.component';
@@ -57,10 +57,11 @@ const appInitializer = (appConfig: ConfigService) => {
     routing,
     BrowserModule,
     ReactiveFormsModule,
-    MatChipsModule,
-    MatIconModule,
     MatFormFieldModule,
     MatAutocompleteModule,
+    MatChipsModule,
+    MatIconModule,
+    MatInputModule,
     BrowserAnimationsModule,
     SimpleNotificationsModule.forRoot(),
     InputTrimModule

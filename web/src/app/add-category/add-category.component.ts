@@ -1,5 +1,5 @@
 import {Component, OnInit, ViewChild} from '@angular/core';
-import {MatAutocompleteSelectedEvent, MatChipInputEvent, MatInput} from "@angular/material";
+import {MatAutocompleteSelectedEvent, MatChipInputEvent, MatInput, MatAutocomplete} from "@angular/material";
 import {Category} from "../_models/Category";
 import {FormBuilder, FormControl} from "@angular/forms";
 import {COMMA, ENTER} from "@angular/cdk/keycodes";
