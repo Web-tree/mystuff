@@ -12,6 +12,7 @@ import {StuffService} from "../_services/stuff.service";
 })
 export class AddCategoryComponent implements OnInit {
   @ViewChild('matInput') matInput: MatInput;
+  @ViewChild('auto') matAutocomplete: MatAutocomplete;
 
   categories: Map<string, Category> = new Map<string, Category>();
   autocompleteCategories: Set<Category>;
