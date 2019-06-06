@@ -4,7 +4,7 @@ matrix:
       jdk: oraclejdk11
       script:
         - cd back
-        - mvn -Dmaven.test.failure.ignore=true verify
+        - mvn clean verify
     - language: node_js
       node_js:
         - "7"
