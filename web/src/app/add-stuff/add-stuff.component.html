@@ -2,7 +2,7 @@
 <form [formGroup]="addStuff" (ngSubmit)="addStuff.valid && save()">
   <div class="form-group">
     <label for="name">Name</label>
-    <input class="form-control" formControlName="name" id="name" required trim="blur"/>
+    <input class="form-control" formControlName="name" id="name" trim="blur"/>
     <div class="alert alert-danger" *ngIf="name.invalid && (name.dirty || name.touched)">
       <div *ngIf="name.errors.required">
         Name is required.

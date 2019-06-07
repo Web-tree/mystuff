@@ -9,7 +9,7 @@
            [matAutocomplete]="auto"
            [matChipInputFor]="chipList"
            [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
-           [matChipInputAddOnBlur]="false"
+           [matChipInputAddOnBlur]="!this.matAutocomplete.isOpen"
            (matChipInputTokenEnd)="add($event)"/>
   </mat-chip-list>
 </mat-form-field>
