@@ -1,4 +1,7 @@
-<ul class="list-group">
+<div class="alert alert-info" *ngIf="!stuffList.length" role="alert">
+  There is no stuff yet. <a href="/stuff/add" class="alert-link">Create new one</a>
+</div>
+<ul class="list-group" *ngIf="stuffList.length">
   <li class="list-group-item" *ngFor="let stuff of stuffList">
     <div class="btn-group d-flex">
 

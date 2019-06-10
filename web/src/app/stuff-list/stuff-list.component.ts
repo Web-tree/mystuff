@@ -1,6 +1,8 @@
 import {Component, OnInit} from '@angular/core';
 import {StuffService} from "../_services/stuff.service";
 
+import{ Stuff } from '../_models/Stuff';
+
 @Component({
   selector: 'stuff-list',
   templateUrl: './stuff-list.component.html',
@@ -8,7 +10,7 @@ import {StuffService} from "../_services/stuff.service";
 })
 export class StuffListComponent implements OnInit {
 
-  public stuffList;
+  public stuffList: Stuff[] = [];
 
   constructor(private stuffService: StuffService) {
   }
@@ -30,7 +32,7 @@ export class StuffListComponent implements OnInit {
       let stuff = this.stuffList[stuffIndex];
       console.log(stuff);
       if (stuff['id'] === id) {
-        this.stuffList.splice(stuffIndex, 1);
+        this.stuffList.splice(+stuffIndex, 1);
       }
     }
   }
