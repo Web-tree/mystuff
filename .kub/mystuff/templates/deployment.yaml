@@ -82,6 +82,10 @@ spec:
         app.kubernetes.io/name: {{ include "mystuff.name.back" . }}
         app.kubernetes.io/instance: {{ .Release.Name }}
     spec:
+      initContainers:
+        - name: wait-for-db
+          image: busybox:1.28
+          command: ['sh', '-c', 'until nslookup {{ include "mystuff.name.neo4j" . }}; do echo waiting for data base; sleep 2; done;']
       containers:
         - name: {{ .Chart.Name }}
           image: "{{ .Values.images.back.repository }}:{{ .Values.images.back.tag }}"
@@ -89,6 +93,10 @@ spec:
           env:
             - name: spring.data.neo4j.uri
               value: http://neo4j:{{ .Values.neo4j.neo4jPassword }}@{{ include "mystuff.name.neo4j" . }}:80
+            - name: "server.tomcat.accesslog.enabled"
+              value: "true"
+            - name: "server.tomcat.accesslog.directory"
+              value: "/logs"
           ports:
             - name: back
               containerPort: 9000
@@ -97,18 +105,18 @@ spec:
             httpGet:
               path: /health
               port: 9000
-            initialDelaySeconds: 40
-            timeoutSeconds: 2
-            periodSeconds: 3
-            failureThreshold: 2
+            initialDelaySeconds: 60
+            timeoutSeconds: 5
+            periodSeconds: 5
+            failureThreshold: 10
           livenessProbe:
             httpGet:
               path: /health
               port: 9000
-            initialDelaySeconds: 100
-            timeoutSeconds: 2
-            periodSeconds: 8
-            failureThreshold: 1
+            initialDelaySeconds: 60
+            timeoutSeconds: 5
+            periodSeconds: 5
+            failureThreshold: 10
       {{- with .Values.nodeSelector }}
       nodeSelector:
       {{- toYaml . | nindent 8 }}

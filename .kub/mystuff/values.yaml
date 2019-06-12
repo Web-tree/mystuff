@@ -7,12 +7,12 @@ replicaCount: 2
 images:
   web:
     repository: webtree/mystuff
-    tag: latest
-    pullPolicy: IfNotPresent
+    tag: web-latest
+    pullPolicy: Always
   back:
     repository: webtree/mystuff
-    tag: latest
-    pullPolicy: IfNotPresent
+    tag: back-latest
+    pullPolicy: Always
 
 nameOverride: ""
 fullnameOverride: ""
@@ -54,7 +54,7 @@ ingress:
   #   memory: 128Mi
 
 nodeSelector:
-  "node-role.kubernetes.io/type": backend
+  "node-role.kubernetes.io/backend":
 
 tolerations: []
 
