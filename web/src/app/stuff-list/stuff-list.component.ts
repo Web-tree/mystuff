@@ -1,6 +1,8 @@
 import {Component, OnInit} from '@angular/core';
 import {StuffService} from "../_services/stuff.service";
 
+import{ Stuff } from '../_models/Stuff';
+
 @Component({
   selector: 'stuff-list',
   templateUrl: './stuff-list.component.html',
@@ -8,7 +10,7 @@ import {StuffService} from "../_services/stuff.service";
 })
 export class StuffListComponent implements OnInit {
 
-  public stuffList;
+  public stuffList: Stuff[] = [];
 
   constructor(private stuffService: StuffService) {
   }
@@ -23,14 +25,14 @@ export class StuffListComponent implements OnInit {
     console.log(id);
     this.stuffService.delete(id).subscribe(() => this._deleteFromCache(id));
   }
-
+  
   private _deleteFromCache(id) {
     console.log(this.stuffList);
-    for (let stuffIndex in this.stuffList) {
-      let stuff = this.stuffList[stuffIndex];
+    for (let i = 0; i < this.stuffList.length; i++) {
+      let stuff = this.stuffList[i];
       console.log(stuff);
-      if (stuff['id'] === id) {
-        this.stuffList.splice(stuffIndex, 1);
+        if (stuff['id'] === id) {
+        this.stuffList.splice(i, 1);
       }
     }
   }
