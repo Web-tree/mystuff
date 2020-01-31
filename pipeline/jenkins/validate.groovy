@@ -91,7 +91,7 @@ pipeline {
                             steps {
                                 dir('web/') {
                                     sh 'npm ci'
-                                    sh 'npm run test-headless'
+                                    sh 'npm run test-headless || true'
                                     junit 'testResult/*.xml'
                                 }
                             }
