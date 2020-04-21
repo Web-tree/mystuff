@@ -14,6 +14,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
+import org.webtree.mystuff.model.domain.AuthDetails;
 import org.webtree.mystuff.model.domain.User;
 import org.webtree.mystuff.security.JwtTokenUtil;
 import org.webtree.mystuff.service.UserService;
@@ -39,10 +40,14 @@ public class SecurityControllerTest extends AbstractControllerTest {
         User user = User.Builder.create().withUsername(TEST_USERNAME).withPassword(TEST_PASS).build();
         userService.add(user);
 
+        AuthDetails authDetails = new AuthDetails();
+        authDetails.setUsername(TEST_USERNAME);
+        authDetails.setPassword(TEST_PASS);
+
         MvcResult mvcResult = mockMvc.perform(
             post("/rest/token/new")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(user))
+                .content(objectMapper.writeValueAsString(authDetails))
         )
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.errors").doesNotExist())

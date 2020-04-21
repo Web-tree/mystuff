@@ -25,6 +25,7 @@ import org.mockito.Captor;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.test.web.servlet.MvcResult;
+import org.webtree.mystuff.model.domain.AuthDetails;
 import org.webtree.mystuff.model.domain.Category;
 import org.webtree.mystuff.model.domain.Stuff;
 import org.webtree.mystuff.model.domain.User;
@@ -141,11 +142,14 @@ public class StuffControllerTest extends AbstractControllerTest {
     @WithAnonymousUser
     public void whenAddExistingStuff_shouldReturnForBothUsers() throws Exception {
         Stuff stuff = stuffService.save(buildNewStuff(NAME, USER_1));
+        AuthDetails authDetails = new AuthDetails();
+        authDetails.setUsername(USER_2);
+        authDetails.setPassword("pass");
         User user2 = userService.add(User.Builder.create().withUsername(USER_2).withPassword("pass").build());
         MvcResult mvcResult = mockMvc.perform(
             post("/rest/token/new")
                 .contentType(APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(user2))
+                .content(objectMapper.writeValueAsString(authDetails))
         )
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.errors").doesNotExist())
@@ -243,6 +247,16 @@ public class StuffControllerTest extends AbstractControllerTest {
         verify(categoryService, never()).save(any());
     }
 
+    @Test // bug #32
+    public void whenGetStuff_shouldNotReturnUserPassword() throws Exception {
+        Stuff stuff = stuffService.save(buildNewStuffWithStaffCategory(NAME, USER_1, buildNewStaffCategories(CATEGORY1)));
+        mockMvc.perform(get("/rest/stuff/" + stuff.getId()).contentType(APPLICATION_JSON))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.creator").isNotEmpty())
+            .andExpect(jsonPath("$.creator.username").value(USER_1))
+            .andExpect(jsonPath("$.creator.password").doesNotExist());
+    }
+
     private Stuff buildNewStuff(String name, String username) {
         return Stuff.Builder.create().withUsers(buildNewUsers(username)).withName(name).build();
     }
@@ -263,12 +277,13 @@ public class StuffControllerTest extends AbstractControllerTest {
     }
 
     private Set<User> buildNewUsers(String username) {
-        return Sets.newHashSet(userService.add(User.Builder.create().withUsername(username).build()));
+        return Sets.newHashSet(userService.add(User.Builder.create().withUsername(username).withPassword("qweasd").build()));
     }
 
 
     private Stuff buildNewStuffWithStaffCategory(String name, String username, Set<Category> categories) {
-        return Stuff.Builder.create().withUsers(buildNewUsers(username)).withName(name)
+        Set<User> users = buildNewUsers(username);
+        return Stuff.Builder.create().withCreator(users.iterator().next()).withUsers(users).withName(name)
             .withCategories(categories).build();
     }
 

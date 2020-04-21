@@ -1,5 +1,6 @@
 package org.webtree.mystuff.model.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.neo4j.ogm.annotation.GraphId;
 import org.neo4j.ogm.annotation.NodeEntity;
 import org.springframework.security.core.GrantedAuthority;
@@ -14,6 +15,7 @@ public class User implements UserDetails {
     @GraphId
     private Long id = null;
     private String username;
+    @JsonIgnore
     private String password;
     private Date lastPasswordResetDate;
 
